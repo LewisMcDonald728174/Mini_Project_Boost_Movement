@@ -13,6 +13,8 @@ public class CharacterController : MonoBehaviour
     [SerializeField] private LayerMask whatIsGround;
     [SerializeField] bool isGrounded;
 
+    private float currentEnergy = 100f;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -24,7 +26,6 @@ public class CharacterController : MonoBehaviour
         Jump();
 
         isGrounded = Physics.CheckSphere(groundCheck.position, groundRadius, (int)whatIsGround);
-
         Debug.Log(isGrounded);
     }
 
@@ -45,7 +46,13 @@ public class CharacterController : MonoBehaviour
 
     void Jump()
     {
-        if (Input.GetKey(KeyCode.Space) && isGrounded = true)
+        if (Input.GetKey(KeyCode.Space) && isGrounded)
             rb.AddForce(Vector3.up * jumpForce);
+    }
+
+    void CheckBoost()
+    {
+        if (Input.GetKey(KeyCode.LeftShift) && currentEnergy)
+
     }
 }
