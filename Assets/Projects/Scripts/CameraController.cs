@@ -19,6 +19,12 @@ public class CameraController : MonoBehaviour
 
     private void Awake() => _distanceToPlayer = Vector3.Distance(transform.position, target.position);
 
+    private void Start()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
     public void Look(InputAction.CallbackContext context)
     {
         _input = context.ReadValue<Vector2>();
