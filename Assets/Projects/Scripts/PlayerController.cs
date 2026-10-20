@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -11,6 +12,8 @@ using UnityEngine.InputSystem.XR;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
+    [SerializeField] private float currentSpeed;
+    [SerializeField] private float normalSpeed = 7f;
     [SerializeField] private float rotationSpeed = 500f;
     private Vector2 _input;
     private CharacterController _characterController;
@@ -27,11 +30,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float jumpPower;
 
     [Header("Boost")]
-    [SerializeField] private BoostControl boost;
+    [HideInInspector] public bool isSprinting;
 
     [Header("Energy")]
     [SerializeField] private Energy energy;
     [SerializeField] private float sprintEnergyCost;
+    [SerializeField] private float boostSpeed = 14f;
 
 
 
@@ -44,6 +48,7 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         Debug.Log(energy.HasEnergy(sprintEnergyCost));
+        currentSpeed = normalSpeed;
     }
     void Update()
     {
@@ -60,10 +65,7 @@ public class PlayerController : MonoBehaviour
 
     private void ApplyMovement()
     {
-        var targetSpeed = boost.isSprinting ? boost.speed * boost.boostMultiplier : boost.speed;
-        boost.currentSpeed = Mathf.MoveTowards(boost.currentSpeed, targetSpeed, boost.acceleration * Time.deltaTime);
-
-        _characterController.Move(_direction * boost.currentSpeed * Time.deltaTime);
+        _characterController.Move(_direction * currentSpeed * Time.deltaTime);
     }
 
     private void ApplyRotation()
@@ -104,24 +106,19 @@ public class PlayerController : MonoBehaviour
 
     public void Boost(InputAction.CallbackContext context)
     {
-        if (energy.HasEnergy(sprintEnergyCost) == true)
+        if (isSprinting = context.started || context.performed)
         {
-            boost.isSprinting = context.started || context.performed;
-        }
-        else
-        {
-            Debug.Log("No Energy");
-        }
-    }
+            if (energy.HasEnergy(sprintEnergyCost) == true)
+            {
+                currentSpeed = boostSpeed;
+                energy.ConsumeEnergy(sprintEnergyCost);
+            }
 
-    [Serializable]
-    public struct BoostControl
-    {
-        public float speed;
-        public float boostMultiplier;
-        public float acceleration;
-
-        [HideInInspector] public bool isSprinting;
-        [HideInInspector] public float currentSpeed;
+            else
+            {
+                currentSpeed = normalSpeed;
+                Debug.Log("No Energy");
+            }
+        }
     }
 }

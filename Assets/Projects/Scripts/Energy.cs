@@ -4,10 +4,11 @@ using UnityEngine;
 
 public class Energy : MonoBehaviour
 {
+    [SerializeField] private PlayerController playerController;
     [SerializeField] private float currentEnergy;
-    [SerializeField] private float maxEnergy = 100f;
-    [SerializeField] private float minEnergy = 0f;
-    [SerializeField] private float regenRate = 1f;
+    [SerializeField] private int maxEnergy;
+    [SerializeField] private int minEnergy;
+    [SerializeField] private int regenRate;
 
     void Start()
     {
@@ -16,24 +17,24 @@ public class Energy : MonoBehaviour
 
     void Update()
     {
-        if (currentEnergy != 100f)
-        {
-            RegenEnergy();
-        }
+        RegenEnergy();
 
-        Mathf.Clamp(currentEnergy, minEnergy, maxEnergy);
+        currentEnergy = Mathf.Clamp(currentEnergy, minEnergy, maxEnergy);
 
         Debug.Log(currentEnergy);
     }
 
     private void RegenEnergy()
     {
-        currentEnergy = currentEnergy + 1 * Time.deltaTime;
+        if (currentEnergy != maxEnergy)
+        {
+            currentEnergy = currentEnergy + regenRate * Time.deltaTime;
+        }
     }
 
-    public void ConsumeEnergy()
+    public void ConsumeEnergy(float amount)
     {
-        
+        currentEnergy -= amount;
     }
 
     public bool HasEnergy(float energyCost)
