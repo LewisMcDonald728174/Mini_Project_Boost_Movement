@@ -106,7 +106,9 @@ public class PlayerController : MonoBehaviour
 
     public void Boost(InputAction.CallbackContext context)
     {
-        if (isSprinting = context.started || context.performed)
+        isSprinting = context.started || context.performed;
+
+        if (isSprinting == true)
         {
             if (energy.HasEnergy(sprintEnergyCost) == true)
             {
