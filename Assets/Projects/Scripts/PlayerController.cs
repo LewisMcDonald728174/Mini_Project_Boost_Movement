@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
+using static UnityEditor.Timeline.TimelinePlaybackControls;
 
 [RequireComponent(typeof(CharacterController))]
 
@@ -62,7 +63,6 @@ public class PlayerController : MonoBehaviour
         _input = context.ReadValue<Vector2>();
         _direction = new Vector3(_input.x, 0.0f, _input.y);
     }
-
     private void ApplyMovement()
     {
         _characterController.Move(_direction * currentSpeed * Time.deltaTime);
@@ -108,15 +108,12 @@ public class PlayerController : MonoBehaviour
     {
         isSprinting = context.started || context.performed;
 
-        if (isSprinting == true)
+        if (isSprinting == true && energy.HasEnergy(sprintEnergyCost))
         {
-            if (energy.HasEnergy(sprintEnergyCost) == true)
-            {
-                currentSpeed = boostSpeed;
-                energy.ConsumeEnergy(sprintEnergyCost);
-            }
+            currentSpeed = boostSpeed;
+            energy.ConsumeEnergy(sprintEnergyCost);
 
-            else
+            if (context.canceled)
             {
                 currentSpeed = normalSpeed;
                 Debug.Log("No Energy");
