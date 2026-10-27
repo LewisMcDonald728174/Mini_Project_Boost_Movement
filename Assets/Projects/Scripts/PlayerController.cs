@@ -8,27 +8,21 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
 using static UnityEditor.Timeline.TimelinePlaybackControls;
 
-[RequireComponent(typeof(CharacterController))]
 
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float currentSpeed;
-    [SerializeField] private float normalSpeed = 7f;
-    [SerializeField] private float rotationSpeed = 500f;
-    private Vector2 _input;
-    private CharacterController _characterController;
-    private Vector3 _direction;
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float rotateSpeed = 25f;
+    [SerializeField] private float jumpForce = 5f;
+    Rigidbody rb;
 
-    private Camera _mainCamera;
-
-    [Header("Gravity")]
-    [SerializeField] private float gravityMultiplier = 3.0f;
-    private float _gravity = -9.81f;
-    private float _velocity;
-
-    [Header("Jump")]
-    [SerializeField] private float jumpPower;
+    [Header("Jump Check")]
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private float groundRadius;
+    [SerializeField] private LayerMask whatIsGround;
+    [SerializeField] bool isGrounded;
 
     [Header("Boost")]
     [HideInInspector] public bool isSprinting;
@@ -39,85 +33,59 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float boostSpeed = 14f;
 
 
-
-    private void Awake()
-    {
-        _characterController = GetComponent<CharacterController>();
-        _mainCamera = Camera.main;
-    }
-
     private void Start()
     {
+        rb = GetComponent<Rigidbody>();
+
+        currentSpeed = moveSpeed;
+
         Debug.Log(energy.HasEnergy(sprintEnergyCost));
-        currentSpeed = normalSpeed;
+        currentSpeed = moveSpeed;
     }
     void Update()
     {
-        ApplyRotation();
-        ApplyGravity();
-        ApplyMovement();
+        Movement();
+        Jump();
+
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundRadius, (int)whatIsGround);
+        Debug.Log(isGrounded);
     }
 
-    public void Movement(InputAction.CallbackContext context)
+    void Movement()
     {
-        _input = context.ReadValue<Vector2>();
-        _direction = new Vector3(_input.x, 0.0f, _input.y);
-    }
-    private void ApplyMovement()
-    {
-        _characterController.Move(_direction * currentSpeed * Time.deltaTime);
-    }
+        if (Input.GetKey(KeyCode.W))
+            transform.Translate(Vector3.forward * currentSpeed * Time.deltaTime);
 
-    private void ApplyRotation()
-    {
-        if (_input.sqrMagnitude == 0) return;
+        if (Input.GetKey(KeyCode.A))
+            transform.Rotate(0, -rotateSpeed * Time.deltaTime, 0);
 
-        _direction = Quaternion.Euler(0.0f, _mainCamera.transform.eulerAngles.y, 0.0f) * new Vector3(_input.x, 0.0f, _input.y);
-        var targetRotation = Quaternion.LookRotation(_direction, Vector3.up);
+        if (Input.GetKey(KeyCode.D))
+            transform.Rotate(0, rotateSpeed * Time.deltaTime, 0);
 
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        if (Input.GetKey(KeyCode.S))
+            transform.Translate(Vector3.forward * -currentSpeed * Time.deltaTime);
+
+        if (Input.GetKey(KeyCode.LeftShift))
+            Boost();
     }
 
-    private void ApplyGravity()
+    void Jump()
     {
-        if (IsGrounded() && _velocity < 0.0f)
+        if (Input.GetKey(KeyCode.Space) && isGrounded)
+            rb.AddForce(Vector3.up * jumpForce);
+    }
+
+    void Boost()
+    {
+        if(energy.HasEnergy(sprintEnergyCost))
         {
-            _velocity = -1.0f;
+            currentSpeed = boostSpeed;
+            energy.ConsumeEnergy(sprintEnergyCost);
         }
 
         else
         {
-            _velocity += _gravity * gravityMultiplier * Time.deltaTime;
-        }
-
-        _direction.y = _velocity;
-    }
-
-    public void Jump(InputAction.CallbackContext context)
-    {
-        if (!context.started) return;
-        if (!IsGrounded()) return;
-
-        _velocity += jumpPower;
-    }
-
-    private bool IsGrounded() => _characterController.isGrounded;
-
-
-    public void Boost(InputAction.CallbackContext context)
-    {
-        isSprinting = context.started || context.performed;
-
-        if (isSprinting == true && energy.HasEnergy(sprintEnergyCost))
-        {
-            currentSpeed = boostSpeed;
-            energy.ConsumeEnergy(sprintEnergyCost);
-
-            if (context.canceled)
-            {
-                currentSpeed = normalSpeed;
-                Debug.Log("No Energy");
-            }
+            currentSpeed = moveSpeed;
         }
     }
 }
